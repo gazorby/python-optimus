@@ -1,3 +1,3 @@
-Release type: minor
+Release type: major
 
 - Add cibuildwheel
