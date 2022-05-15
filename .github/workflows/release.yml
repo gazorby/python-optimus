@@ -8,7 +8,7 @@ on:
       - main
       - build/use-cibuildwheel
     tags:
-      - '**'
+      - "**"
 
 jobs:
   release-file-check:
@@ -27,62 +27,92 @@ jobs:
         uses: ./.github/release-check-action
         id: release-check
 
+  bump:
+    name: bump version
+    needs: release-file-check
+    runs-on: ubuntu-latest
+    if: "${{ needs.release-file-check.outputs.status == 'OK' }} && (startsWith(github.ref, 'refs/tags/')"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+
+      - name: Install deps
+        run: |
+          python -m pip install pip --upgrade
+          pip install githubrelease httpx twine
+
+      - name: bump
+        if: steps.check_release.outputs.release == ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          git remote set-url origin https://${{ secrets.BOT_TOKEN }}@github.com/${{ github.repository }}
+          autopub prepare
+          autopub commit
+
   build:
     name: build py3.${{ matrix.python-version }} on ${{ matrix.platform || matrix.os }}
-    if: "success() && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')"
+    needs: bump
+    if: "success() && (startsWith(github.ref, 'refs/tags/')"
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu , macos , windows]
-        python-version: ['7', '8', '9', '10']
+        os: [ubuntu, macos, windows]
+        python-version: ["7", "8", "9", "10"]
         include:
-        - os: ubuntu
-          platform: linux
-        - os: windows
-          ls: dir
+          - os: ubuntu
+            platform: linux
+          - os: windows
+            ls: dir
 
     runs-on: ${{ matrix.os }}-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: set up python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
+      - name: set up python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
 
-    - name: Install deps
-      run: |
-        pip install -U cibuildwheel twine
+      - name: Install deps
+        run: |
+          pip install -U cibuildwheel twine
 
-    - name: Build sdist
-      if: matrix.os == 'ubuntu' && matrix.python-version == '9'
-      run: |
-        pip install poetry
-        poetry build --format sdist
+      - name: Build sdist
+        if: matrix.os == 'ubuntu' && matrix.python-version == '9'
+        run: |
+          pip install poetry
+          poetry build --format sdist
 
-    - name: Build wheel
-      run: cibuildwheel --output-dir dist
-      env:
-        PIP: 'pip'
-        CIBW_BUILD: 'cp3${{ matrix.python-version }}-*'
-        CIBW_BEFORE_BUILD: 'pip install -U Cython'
+      - name: Build wheel
+        run: cibuildwheel --output-dir dist
+        env:
+          PIP: "pip"
+          CIBW_BUILD: "cp3${{ matrix.python-version }}-*"
+          CIBW_BEFORE_BUILD: "pip install -U Cython"
 
-    - name: list dist files
-      run: |
-        ${{ matrix.ls || 'ls -lh' }} dist/
-        twine check dist/*
+      - name: list dist files
+        run: |
+          ${{ matrix.ls || 'ls -lh' }} dist/
+          twine check dist/*
 
-    - name: Store wheel artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: pypi_files
-        path: dist
+      - name: Store wheel artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: pypi_files
+          path: dist
 
   deploy:
     name: Release
     runs-on: ubuntu-latest
-    needs: [release-file-check, build]
-    if: ${{ needs.release-file-check.outputs.status == 'OK' }} && startsWith(github.ref, 'refs/tags/')
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
     outputs:
       version: ${{ steps.get-version.outputs.version }}
     steps:
@@ -125,13 +155,10 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
 
       - name: Release
-        if: steps.check_release.outputs.release == ''
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
           git remote set-url origin https://${{ secrets.BOT_TOKEN }}@github.com/${{ github.repository }}
-          autopub prepare
-          autopub commit
           autopub githubrelease
 
       - name: Get project version
