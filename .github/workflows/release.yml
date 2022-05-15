@@ -46,6 +46,7 @@ jobs:
         run: |
           python -m pip install pip --upgrade
           pip install githubrelease httpx twine
+          pip install "git+https://github.com/patrick91/autopub.git@fix/release-not-found#egg=autopub"
 
       - name: bump
         if: steps.check_release.outputs.release == ''
