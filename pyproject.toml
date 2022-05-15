@@ -1,7 +1,8 @@
 [tool.poetry]
 name = "optimus-id"
-version = "0.4.0"
+version = "0.6.0"
 description = "Transform internal id's to obfuscated integers using Knuth's integer hash"
+readme = "README.md"
 authors = ["gazorby <gazorby@pm.me>"]
 license = "MIT"
 
@@ -16,7 +17,7 @@ pytest-cov = "^3.0.0"
 Cython = "^0.29.28"
 
 [build-system]
-requires = ["poetry-core>=1.0.0", "cython", "setuptools"]
+requires = ["poetry-core>=1.0.0", "Cython", "setuptools"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.build]
