@@ -53,6 +53,10 @@ jobs:
 
     - name: Build sdist
       run: cibuildwheel --output-dir dist
+      env:
+        PIP: 'pip'
+        CIBW_BUILD: 'cp3${{ matrix.python-version }}-*'
+        CIBW_BEFORE_BUILD: 'pip install -U Cython'
 
     - name: Store dist artifacts
       uses: actions/upload-artifact@v2
