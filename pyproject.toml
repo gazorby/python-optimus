@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "optimus-id"
-version = "0.4.0"
+version = "1.0.0"
 description = "Transform internal id's to obfuscated integers using Knuth's integer hash"
 readme = "README.md"
 authors = ["gazorby <gazorby@pm.me>"]
