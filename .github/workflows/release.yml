@@ -51,6 +51,12 @@ jobs:
       run: |
         pip install -U cibuildwheel
 
+    - name: Build sdist
+      if: matrix.os == 'ubuntu' && matrix.python-version == '9'
+      run: |
+        pip install poetry
+        poetry build --format sdist
+
     - name: Build wheel
       run: cibuildwheel --output-dir dist
       env:
@@ -81,17 +87,22 @@ jobs:
         with:
           python-version: "3.8"
 
+      - name: Install deps
+        run: |
+          python -m pip install pip --upgrade
+          pip install githubrelease httpx twine
+          pip install "git+https://github.com/patrick91/autopub.git@fix/release-not-found#egg=autopub"
+
       - name: get dist artifacts
         uses: actions/download-artifact@v2
         with:
           name: pypi_files
           path: dist
 
-      - name: Install deps
+      - name: twine check
         run: |
-          python -m pip install pip --upgrade
-          pip install poetry githubrelease httpx
-          pip install "git+https://github.com/patrick91/autopub.git@fix/release-not-found#egg=autopub"
+          twine check dist/*
+          ls -lh dist
 
       - name: Check if we should release
         id: check_release
@@ -99,18 +110,21 @@ jobs:
           set +e
           echo ::set-output name=release::$(autopub check)
 
-      - name: Publish
+      - name: upload to pypi
+        run: twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Release
         if: steps.check_release.outputs.release == ''
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
         run: |
           git remote set-url origin https://${{ secrets.BOT_TOKEN }}@github.com/${{ github.repository }}
           autopub prepare
-          poetry build --format sdist
           autopub commit
           autopub githubrelease
-          poetry publish --username __token__
 
       - name: Get project version
         id: get-version
