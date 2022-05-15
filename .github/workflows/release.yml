@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - build/use-cibuildwheel
 
 jobs:
   release-file-check:
@@ -25,7 +26,7 @@ jobs:
         id: release-check
 
   build:
-    name: Build
+    name: build py3.${{ matrix.python-version }} on ${{ matrix.platform || matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -46,13 +47,12 @@ jobs:
       with:
         python-version: '3.8'
 
-    - name: Install
+    - name: Install deps
       run: |
-        pip install poetry
-        poetry run pip install Cython
+        pip install -U cibuildwheel
 
     - name: Build sdist
-      run: poetry build
+      run: cibuildwheel --output-dir dist
 
     - name: Store dist artifacts
       uses: actions/upload-artifact@v2
@@ -71,25 +71,30 @@ jobs:
       - uses: actions/checkout@v2
         with:
           persist-credentials: false
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: "3.8"
+
       - name: get dist artifacts
         uses: actions/download-artifact@v2
         with:
           name: pypi_files
           path: dist
+
       - name: Install deps
         run: |
           python -m pip install pip --upgrade
           pip install poetry githubrelease httpx
           pip install "git+https://github.com/patrick91/autopub.git@fix/release-not-found#egg=autopub"
+
       - name: Check if we should release
         id: check_release
         run: |
           set +e
           echo ::set-output name=release::$(autopub check)
+
       - name: Publish
         if: steps.check_release.outputs.release == ''
         env:
@@ -101,6 +106,7 @@ jobs:
           autopub commit
           autopub githubrelease
           poetry publish --username __token__
+
       - name: Get project version
         id: get-version
         shell: python
