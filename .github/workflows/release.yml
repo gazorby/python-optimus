@@ -90,7 +90,7 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install pip --upgrade
-          pip install poetry githubrelease httpx
+          pip install poetry githubrelease httpx Cython
           pip install "git+https://github.com/patrick91/autopub.git@fix/release-not-found#egg=autopub"
 
       - name: Check if we should release
