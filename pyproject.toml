@@ -2,6 +2,7 @@
 name = "optimus-id"
 version = "0.6.0"
 description = "Transform internal id's to obfuscated integers using Knuth's integer hash"
+readme = "Readme.md"
 authors = ["gazorby <gazorby@pm.me>"]
 license = "MIT"
 
