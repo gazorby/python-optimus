@@ -26,7 +26,7 @@ jobs:
 
   bump:
     needs: release-file-check
-    if: ${{ needs.release-file-check.outputs.status == 'OK' }} && 
+    if: ${{ needs.release-file-check.outputs.status == 'OK' }} &&
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -76,6 +76,9 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     steps:
       - uses: actions/checkout@v2
+        # Needed to get last commits
+        with:
+          ref: main
 
       - name: set up python
         uses: actions/setup-python@v2
@@ -119,6 +122,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
+          # Needed to get last commits
+          ref: main
           persist-credentials: false
 
       - name: Set up Python
