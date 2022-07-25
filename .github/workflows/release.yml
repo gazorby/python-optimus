@@ -40,8 +40,7 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install pip --upgrade
-          pip install httpx poetry
-          pip install "git+https://github.com/patrick91/autopub.git@fix/release-not-found#egg=autopub"
+          pip install httpx poetry autopub
 
       - name: Check if we should release
         id: check_release
@@ -141,8 +140,7 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install pip --upgrade
-          pip install githubrelease httpx twine
-          pip install "git+https://github.com/patrick91/autopub.git@fix/release-not-found#egg=autopub"
+          pip install githubrelease httpx twine autopub
 
       - name: Get dist artifacts
         uses: actions/download-artifact@v2
